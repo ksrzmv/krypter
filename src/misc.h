@@ -20,6 +20,7 @@ extern const short DWORD_SIZE;
 #define ROTR64(X,C) (((X)>>(C))|((X)<<(64-(C))))
 
 enum mode { ENCRYPTION, DECRYPTION, KEYGEN };
+enum rkey { FROM_FILE, FROM_STDIN };
 
 BYTE *keygen(int);
 WORD pow_word(WORD, WORD);

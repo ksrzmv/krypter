@@ -51,14 +51,16 @@ WORD align(WORD x) {
 
 int flush_data(FILE *f, WORD *data, WORD file_size, enum mode m) {
   WORD data_size, delta;
-  if (m == ENCRYPTION) {
-    data_size = align(file_size);
-    file_size = WORD_SIZE * data_size;
-  }
-  else if (m == DECRYPTION) {
-    data_size = file_size / 8;
-    delta = data[data_size - 1] & 0xff;
-    file_size = file_size - delta;
+  switch (m) {
+    case ENCRYPTION:
+      data_size = align(file_size);
+      file_size = WORD_SIZE * data_size;
+      break;
+    case DECRYPTION:
+      data_size = file_size / WORD_SIZE;
+      delta = data[data_size - 1] & 0xff;
+      file_size = file_size - delta;
+      break;
   }
   for (WORD i = 0, k = 0; i < data_size; ++i) {
     for (WORD j = 0; j < WORD_SIZE && k < file_size; ++j, ++k) {

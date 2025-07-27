@@ -2,22 +2,24 @@
 #include "./misc.h"
 #include <unistd.h>
 
-
-#define TEST_ENCRYPTION_FILE "./test/enc.txt"
-#define TEST_DECRYPTION_FILE "./test/dec.txt"
-
 const short NR = 255;
-const char  *ARG_PATTERN = "k:ed";
+const char  *ARG_PATTERN = "k:d";
+const char  *OUT_STREAM = "/dev/stdout";
 
 int main(int argc, char** argv){
-  enum mode m;
+  WORD data_size, file_size, ch, delta;
+  WORD *data;
+  BYTE *key;
+  char *keyfile = "./.key";
+  FILE *finput, *fout;
+  enum mode m = ENCRYPTION;
+  /* rc5 context */
+  rc5_ctx c;
   int kl;
+
   char arg;
   while ((arg = getopt(argc, argv, ARG_PATTERN)) != -1) {
     switch (arg) {
-      case 'e':
-        m = ENCRYPTION;
-        break;
       case 'd':
         m = DECRYPTION;
         break;
@@ -30,6 +32,7 @@ int main(int argc, char** argv){
     }
   }
 
+
   if (m == KEYGEN) {
     BYTE *key = keygen(kl);
     fprintf(stdout, "%s", key);
@@ -37,20 +40,18 @@ int main(int argc, char** argv){
     return 0;
   }
 
-  /* rc5 context */
-
   /* read key */
   /*
    * read hidden key from stdin
-   * BYTE *key = (BYTE*)getpass("Enter key: ");
+   * key = (BYTE*)getpass("Enter key: ");
    *
   */
-  FILE *fkey = fopen("./.key", "rb");
+  FILE *fkey = fopen(keyfile, "rb");
   if (fkey == NULL) {
     fprintf(stderr, "%s\n", "no \".key\" file provided, exit");
     return 1;
   }
-  BYTE *key = (BYTE*)calloc(get_file_size(fkey), sizeof(BYTE));
+  key = (BYTE*)calloc(get_file_size(fkey), sizeof(BYTE));
   char kch;
   int i = 0;
   while ((kch = fgetc(fkey)) != EOF) {
@@ -59,11 +60,8 @@ int main(int argc, char** argv){
   }
   int key_len = strlen((const char*)key);
 
-  WORD data_size, file_size, ch, delta;
-  WORD *data;
-  FILE *finput, *fenc, *fdec;
 
-  finput = fopen(argv[2], "rb");
+  finput = fopen(argv[argc-1], "rb");
   file_size = get_file_size(finput);
 
   /* get size of array of 8-byte blocks */
@@ -106,7 +104,6 @@ int main(int argc, char** argv){
     }
   }
 
-  rc5_ctx c;
 
   rc5_init(&c, NR); /* nr = number of rounds */
   rc5_key(&c, key, key_len); /* key_len = length of the key in bytes */
@@ -116,19 +113,15 @@ int main(int argc, char** argv){
   switch(m) {
     case ENCRYPTION:
       rc5_encrypt(&c, data, nb);
-      fenc = fopen(TEST_ENCRYPTION_FILE, "w");
-      flush_data(fenc, data, file_size, m);
-      fclose(fenc);
-      fprintf(stdout, "%s\n", "encryption completed");
       break;
     case DECRYPTION:
       rc5_decrypt(&c, data, nb);
-      fdec = fopen(TEST_DECRYPTION_FILE, "w");
-      flush_data(fdec, data, file_size, m);
-      fclose(fdec);
-      fprintf(stdout, "%s\n", "decryption completed");
       break;
   }
+
+  fout = fopen(OUT_STREAM, "wb");
+  flush_data(fout, data, file_size, m);
+  fclose(fout);
 
   return 0;
 }
