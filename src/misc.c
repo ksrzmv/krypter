@@ -9,10 +9,14 @@ const short DWORD_SIZE = 2*WORD_SIZE;
 BYTE *keygen(int length) {
   BYTE ch;
   BYTE *key = (BYTE*)calloc(length, sizeof(BYTE));
+  if (key == NULL) {
+    fprintf(stderr, "%s\n", "[keygen] key: memory allocation error, exit.");
+    exit;
+  }
   int i = 0;
   FILE *rnd = fopen("/dev/random", "rb");
   if (rnd == NULL) {
-    fprintf(stderr, "%s\n", "failed to open /dev/random, exit");
+    fprintf(stderr, "%s\n", "[keygen] rnd: failed to open /dev/random, exit");
     exit;
   }
   while (i < length) {

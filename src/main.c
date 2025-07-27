@@ -41,10 +41,18 @@ int main(int argc, char** argv){
 
   /* read key */
   key = (BYTE*)getpass("Enter key: ");
+  if (key == NULL) {
+    fprintf(stderr, "%s\n", "[main] key: error while read key, exit.");
+    exit;
+  }
   key_len = strlen((const char*)key);
 
 
   finput = fopen(argv[argc-1], "rb");
+  if (finput == NULL) {
+    fprintf(stderr, "%s\n", "[main]: no input file, exit");
+    exit;
+  }
   file_size = get_file_size(finput);
 
   /* get size of array of 8-byte blocks */
@@ -58,8 +66,8 @@ int main(int argc, char** argv){
 
   data = (WORD*)calloc(data_size, WORD_SIZE);
   if (data == NULL) {
-    fprintf(stderr, "%s\n", "error while memory allocation, exit");
-    return 1;
+    fprintf(stderr, "%s\n", "[main] data: error while memory allocation, exit");
+    exit;
   }
 
   BYTE IS_EOF = 0;
@@ -103,6 +111,10 @@ int main(int argc, char** argv){
   }
 
   fout = fopen(OUT_STREAM, "wb");
+  if (fout == NULL) {
+    fprintf(stderr, "%s\n", "[main] output: error while open output stream, exit.");
+    exit;
+  }
   flush_data(fout, data, file_size, m);
   fclose(fout);
 
