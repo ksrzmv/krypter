@@ -10,12 +10,11 @@ int main(int argc, char** argv){
   WORD data_size, file_size, ch, delta;
   WORD *data;
   BYTE *key;
-  char *keyfile = "./.key";
   FILE *finput, *fout;
   enum mode m = ENCRYPTION;
   /* rc5 context */
   rc5_ctx c;
-  int kl;
+  int key_len;
 
   char arg;
   while ((arg = getopt(argc, argv, ARG_PATTERN)) != -1) {
@@ -25,7 +24,7 @@ int main(int argc, char** argv){
         break;
       case 'k':
         m = KEYGEN;
-        kl = atoi(optarg);
+        key_len = atoi(optarg);
         break;
       default:
         return 1;
@@ -34,31 +33,15 @@ int main(int argc, char** argv){
 
 
   if (m == KEYGEN) {
-    BYTE *key = keygen(kl);
+    key = keygen(key_len);
     fprintf(stdout, "%s", key);
     free(key);
     return 0;
   }
 
   /* read key */
-  /*
-   * read hidden key from stdin
-   * key = (BYTE*)getpass("Enter key: ");
-   *
-  */
-  FILE *fkey = fopen(keyfile, "rb");
-  if (fkey == NULL) {
-    fprintf(stderr, "%s\n", "no \".key\" file provided, exit");
-    return 1;
-  }
-  key = (BYTE*)calloc(get_file_size(fkey), sizeof(BYTE));
-  char kch;
-  int i = 0;
-  while ((kch = fgetc(fkey)) != EOF) {
-    key[i] = kch;
-    ++i;
-  }
-  int key_len = strlen((const char*)key);
+  key = (BYTE*)getpass("Enter key: ");
+  key_len = strlen((const char*)key);
 
 
   finput = fopen(argv[argc-1], "rb");
