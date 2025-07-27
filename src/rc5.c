@@ -23,7 +23,11 @@ void rc5_destroy(rc5_ctx *c){
 /* Allocate memory for rc5 context's xk and such. */
 void rc5_init(rc5_ctx *c, int rounds){
 	c->nr = rounds;
-	c->xk = (WORD *) malloc(WORD_SIZE*(2*(rounds+1)));
+	c->xk = (WORD*)malloc(WORD_SIZE*(2*(rounds+1)));
+  if (c->xk == NULL) {
+    fprintf(stderr, "%s\n", "[rc5 context] xk: memory allocation error, exit.");
+    exit;
+  }
 }
 
 /*
