@@ -14,14 +14,14 @@
 
 /* Scrub out all sensitive values. */
 void rc5_destroy(rc5_ctx *c){
-	for(int i = 0; i < 2*((c->nr) + 1); ++i) {
+	for(WORD i = 0; i < 2*((c->nr) + 1); ++i) {
     c->xk[i] = 0;
   }
 	free(c->xk);
 }
 
 /* Allocate memory for rc5 context's xk and such. */
-void rc5_init(rc5_ctx *c, int rounds){
+void rc5_init(rc5_ctx *c, WORD rounds){
 	c->nr = rounds;
 	c->xk = (WORD*)malloc(WORD_SIZE*(2*(rounds+1)));
   if (c->xk == NULL) {
@@ -43,7 +43,7 @@ void rc5_init(rc5_ctx *c, int rounds){
 **      architectures like the 8086, RC5 (actually, RC5-32) may not be
 **      quite so fast.
 */
-void rc5_encrypt(rc5_ctx *c, WORD *data, int blocks){
+void rc5_encrypt(rc5_ctx *c, WORD *data, WORD blocks){
   WORD *d, *sk;
   WORD h, i, rc;
 
@@ -74,14 +74,20 @@ void rc5_encrypt(rc5_ctx *c, WORD *data, int blocks){
 **      This function decrypts a bunch of blocks with RC5 in ECB mode.
 **      Padding short blocks is the user's responsibility.
 */
-void rc5_decrypt(rc5_ctx *c, WORD *data, int blocks){
+void rc5_decrypt(rc5_ctx *c, WORD *data, WORD blocks){
 	WORD *d, *sk;
-  int h, i, rc;
+  WORD h, rc;
 
 	d = data;
   sk = (c->xk) + 2;
 	for(h = 0; h < blocks; ++h){
-    for(i = c->nr - 1; i >= 0; --i){
+    /* 
+     * [BUG]: there's round to UINT64_T_MAX after comparison 'i >= 0' when 'i' is WORD type.
+     * so it results in SEGFAULT. use standard signed integer.
+     * there's no overflow issue in rc5_encrypt function.
+     *
+     */
+    for(int i = c->nr - 1; i >= 0; --i){
       /* used for debug */
       /* printf("Round %03d: %08lx %08lx  sk: %08lx %08lx\n", i,d[0],d[1],sk[i],sk[i+1]); */
       d[1] -= sk[2*i+1];
@@ -119,9 +125,9 @@ void rc5_decrypt(rc5_ctx *c, WORD *data, int blocks){
 **          it by (A + B) mod 64 bits, and setting B to that result.
 **
 */
-void rc5_key(rc5_ctx *c, BYTE *key, int keylen){
+void rc5_key(rc5_ctx *c, BYTE *key, WORD keylen){
 	WORD *pk, A, B;
-	int xk_len, pk_len, i, num_steps,rc;
+	WORD xk_len, pk_len, i, num_steps,rc;
 	BYTE *cp;
 
 	xk_len = 2*(c->nr + 1);

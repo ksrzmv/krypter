@@ -2,18 +2,18 @@
 #include <stdlib.h>
 #include "./misc.h"
 
-const short WORD_SIZE = sizeof(WORD);
-const short WORD_SIZE_BITS = 8*WORD_SIZE;
-const short DWORD_SIZE = 2*WORD_SIZE;
+const WORD WORD_SIZE = sizeof(WORD);
+const WORD WORD_SIZE_BITS = 8*WORD_SIZE;
+const WORD DWORD_SIZE = 2*WORD_SIZE;
 
-BYTE *keygen(int length) {
+BYTE *keygen(WORD length) {
   BYTE ch;
   BYTE *key = (BYTE*)calloc(length, sizeof(BYTE));
   if (key == NULL) {
     fprintf(stderr, "%s\n", "[keygen] key: memory allocation error, exit.");
     exit;
   }
-  int i = 0;
+  WORD i = 0;
   FILE *rnd = fopen("/dev/random", "rb");
   if (rnd == NULL) {
     fprintf(stderr, "%s\n", "[keygen] rnd: failed to open /dev/random, exit");
@@ -53,7 +53,7 @@ WORD align(WORD x) {
   return res + res % 2;
 }
 
-int flush_data(FILE *f, WORD *data, WORD file_size, enum mode m) {
+WORD flush_data(FILE *f, WORD *data, WORD file_size, enum mode m) {
   WORD data_size, delta;
   switch (m) {
     case ENCRYPTION:
@@ -68,6 +68,7 @@ int flush_data(FILE *f, WORD *data, WORD file_size, enum mode m) {
   }
   for (WORD i = 0, k = 0; i < data_size; ++i) {
     for (WORD j = 0; j < WORD_SIZE && k < file_size; ++j, ++k) {
+      /* [TODO]: rewrite to bitwise shift */
       fputc((char)(data[i] / pow_word(DWORD_SIZE, DWORD_SIZE-2-2*j)), f);
     }
   }
