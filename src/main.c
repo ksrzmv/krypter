@@ -2,7 +2,7 @@
 #include "./misc.h"
 #include <unistd.h>
 
-const short NR = 255;
+const WORD NR = 255;
 const char  *ARG_PATTERN = "k:d";
 const char  *OUT_STREAM = "/dev/stdout";
 
@@ -14,7 +14,7 @@ int main(int argc, char** argv){
   enum mode m = ENCRYPTION;
   /* rc5 context */
   rc5_ctx c;
-  int key_len;
+  WORD key_len;
 
   char arg;
   while ((arg = getopt(argc, argv, ARG_PATTERN)) != -1) {
@@ -91,7 +91,8 @@ int main(int argc, char** argv){
         }
       }
       
-      data[i] += ch * pow_word(DWORD_SIZE, DWORD_SIZE-2-2*j);
+      /* data[i] += ch * pow_word(DWORD_SIZE, DWORD_SIZE-2-2*j); */
+      data[i] += ch * (1 << (56 - 8*j));
     }
   }
 
@@ -99,7 +100,7 @@ int main(int argc, char** argv){
   rc5_init(&c, NR); /* nr = number of rounds */
   rc5_key(&c, key, key_len); /* key_len = length of the key in bytes */
 
-  int nb = data_size/2;
+  WORD nb = data_size/2;
 
   switch(m) {
     case ENCRYPTION:
